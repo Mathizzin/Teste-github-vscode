@@ -11,7 +11,8 @@ class ContactsController < ApplicationController
 
   # GET /contacts/1
   def show
-    render json: @contact, include: [{ kind: { except: %i[created_at updated_at] } }, :phones], methods: :phone_count
+    render json: @contact, methods: :phone_count,
+      include: { kind: model_render_exp,phones: model_render_exp  , address: model_render_exp}
   end
 
   # POST /contacts
@@ -21,7 +22,7 @@ class ContactsController < ApplicationController
 
     if @contact.save
       render json: @contact, status: :created, location: @contact,
-             include: [{ kind: { except: %i[created_at updated_at] } }, :phones]
+             include: [{ kind: { except: %i[created_at updated_at] } }, :phones, :address]
     else
       render json: @contact.errors, status: :unprocessable_entity
     end
@@ -31,7 +32,7 @@ class ContactsController < ApplicationController
   def update
     if @contact.update(contact_params)
       render json: @contact, status: :created, location: @contact,
-             include: [{ kind: { except: %i[created_at updated_at] } }, :phones]
+             include: [{ kind: { except: %i[created_at updated_at] } }, :phones, :address]
     else
       render json: @contact.errors, status: :unprocessable_entity
     end
@@ -46,6 +47,11 @@ class ContactsController < ApplicationController
 
   private
 
+  def model_render_exp
+    { except: %i[created_at updated_at] }
+  end
+
+
   # Use callbacks to share common setup or constraints between actions.
   def set_contact
     @contact = Contact.find(params[:id])
@@ -53,6 +59,7 @@ class ContactsController < ApplicationController
 
   # Only allow a trusted parameter "white list" through.
   def contact_params
-    params.require(:contact).permit(:name, :email, :birthdate, :kind_id, phones_attributes: %i[id number _destroy])
+    params.require(:contact).permit(:name, :email, :birthdate, :kind_id, phones_attributes: %i[id number _destroy],
+                                                                         address_attributes: %i[id street city])
   end
 end
